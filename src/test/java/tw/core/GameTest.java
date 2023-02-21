@@ -4,15 +4,17 @@ package tw.core;/*
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tw.core.exception.OutOfGuessCountException;
 import tw.core.generator.AnswerGenerator;
 import tw.core.model.GuessResult;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GameTest {
+ class GameTest {
 
     private final Answer actualAnswer = Answer.createAnswer("1 2 3 4");
     private Game game;
@@ -26,16 +28,88 @@ public class GameTest {
 
 
     @Test
-    public void should_get_the_success_status_when_guess_input_is_correct() throws Exception {
+     void should_get_the_success_status_when_guess_input_is_correct() throws Exception {
 
         //given
-//        excuteSuccessGuess();
+//        executeSuccessGuess();
         GuessResult guess = game.guess(Answer.createAnswer("1 2 3 4"));
         //when
         //then
         assertThat(guess.getResult(), is("4A0B"));
+        assertThat(game.checkStatus(),is("success"));
 
     }
+    @Test
+    void should_throw_exception_when_guess_count_over_6() {
+        // given
+        Answer testAnswer = Answer.createAnswer("5 6 7 8");
+        // when
 
+        try {
+            game.guess(testAnswer);
+            game.guess(testAnswer);
+            game.guess(testAnswer);
+            game.guess(testAnswer);
+            game.guess(testAnswer);
+            game.guess(testAnswer);
+            game.guess(testAnswer);
+            fail("OutOfGuessCountException Expected!");
+        }
+        // then
+        catch (OutOfGuessCountException e) {
+            assertThat(e.getMessage(),is("Guess count cant over 6!"));
+        }
+    }
+
+    @Test
+    void should_get_guess_history_when_every_guess_end() throws OutOfGuessCountException {
+        // given
+        Answer testAnswer1 = Answer.createAnswer("5 6 7 8");
+        Answer testAnswer2 = Answer.createAnswer("3 6 7 8");
+        // when
+        GuessResult guessResult01 = game.guess(testAnswer1);
+        GuessResult guessResult02 = game.guess(testAnswer2);
+        // then
+        assertThat(game.guessHistory().get(0),is(guessResult01));
+        assertThat(game.guessHistory().get(1),is(guessResult02));
+
+    }
+    @Test
+    void should_checkContinue_return_true_when_guess_count_less_6_and_game_not_success() throws OutOfGuessCountException {
+        // given
+        Answer testAnswer1 = Answer.createAnswer("5 6 7 8");
+        Answer testAnswer2 = Answer.createAnswer("3 6 7 8");
+        // when
+        game.guess(testAnswer1);
+        game.guess(testAnswer2);
+        // then
+        assertThat(game.checkCoutinue(),is(true));
+    }
+
+     @Test
+     void should_checkContinue_return_false_when_guess_count_equal_or_over_6() throws OutOfGuessCountException {
+         // given
+         Answer testAnswer1 = Answer.createAnswer("5 6 7 8");
+         Answer testAnswer2 = Answer.createAnswer("3 6 7 8");
+         // when
+         game.guess(testAnswer1);
+         game.guess(testAnswer2);
+         game.guess(testAnswer1);
+         game.guess(testAnswer2);
+         game.guess(testAnswer1);
+         game.guess(testAnswer2);
+         // then
+         assertThat(game.checkCoutinue(),is(false));
+     }
+
+     @Test
+     void should_checkContinue_return_false_when_game_success() throws OutOfGuessCountException {
+         // given
+         Answer testAnswer1 = Answer.createAnswer("1 2 3 4");
+         // when
+         game.guess(testAnswer1);
+         // then
+         assertThat(game.checkCoutinue(),is(false));
+     }
 
 }
